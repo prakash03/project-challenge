@@ -7,7 +7,13 @@
 
   <p><%= @dog.description %></p>
 
-  <%= link_to "Edit #{@dog.name}'s Profile", edit_dog_path %>
-  <br>
-  <%= link_to "Delete #{@dog.name}'s Profile", dog_path, method: :delete, data: { confirm: 'Are you sure?' } %>
+  <p>
+    <%= @dog.likes.count %> <%= (@dog.likes.count) == 1 ? 'Like' : 'Likes'%>
+  </p>
+
+  <% if @dog.owner == current_user %>
+    <%= link_to "Edit #{@dog.name}'s Profile", edit_dog_path %>
+    <br>
+    <%= link_to "Delete #{@dog.name}'s Profile", dog_path, method: :delete, data: { confirm: 'Are you sure?' } %>
+  <% end %>
 </section>

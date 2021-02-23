@@ -1,1 +1,29 @@
-<%= render partial: 'thumbnail', collection: @dogs, as: :dog %>
+<div class="container" style="margin-bottom: 50px">
+  <div class="card">
+    <div class="card-title">
+      <div class="navbar navbar-light bg-light">
+        <%= form_with(url: dogs_path, method: :get, local: true, class: 'ml-auto') do |f| %>
+          <%= f.select :order, ["Default", "Most Likes in last Hour"], selected: params[:order], input_html: { class: 'form-control' } %>
+          <%= f.submit "Sort", class: 'btn btn-secondary' %>
+        <% end%>
+      </div>
+    </div>
+
+    <div class="card-body">
+      <div class="row">
+        <div class="digg_pagination">
+          <div class="page_info" align="center"><%= page_entries_info @dogs %></div>
+          <% @dogs.each_with_index do |dog, index| %>
+            <% if index % 2 == 0 && index != 0 %>
+              <%= render 'dogs/ad' %>
+            <% end %>
+            <%= render 'dogs/thumbnail', dog: dog %>
+          <% end %>
+          <div align="center"><%= will_paginate @dogs, :container => false %></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+

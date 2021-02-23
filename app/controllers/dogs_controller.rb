@@ -4,7 +4,16 @@ class DogsController < ApplicationController
   # GET /dogs
   # GET /dogs.json
   def index
-    @dogs = Dog.all
+    if params[:order] == "Most Likes in last Hour"
+      @dogs = Dog.left_joins(:likes)
+                 .group(:id)
+                 .order("COUNT(likes.id) DESC")
+                 .where("likes.created_at >= ?", 1.hour.ago)
+      @dogs = @dogs + Dog.where.not(id: @dogs.pluck(:id))
+      @dogs = @dogs.paginate(:page => params[:page], :per_page=>5)
+    else
+      @dogs = Dog.paginate(:page => params[:page], :per_page=>5)
+    end
   end
 
   # GET /dogs/1
@@ -25,10 +34,13 @@ class DogsController < ApplicationController
   # POST /dogs.json
   def create
     @dog = Dog.new(dog_params)
+    @dog.owner = current_user
 
     respond_to do |format|
       if @dog.save
-        @dog.images.attach(params[:dog][:image]) if params[:dog][:image].present?
+        params[:dog][:images].each do |image|
+          @dog.images.attach(image)
+        end
 
         format.html { redirect_to @dog, notice: 'Dog was successfully created.' }
         format.json { render :show, status: :created, location: @dog }
@@ -43,14 +55,23 @@ class DogsController < ApplicationController
   # PATCH/PUT /dogs/1.json
   def update
     respond_to do |format|
-      if @dog.update(dog_params)
-        @dog.images.attach(params[:dog][:image]) if params[:dog][:image].present?
+      if curent_user_authorized?
+        if @dog.update(dog_params)
+          if params[:dog][:images].present?
+            params[:dog][:images].each do |image|
+              @dog.images.attach(image)
+            end
+          end
 
-        format.html { redirect_to @dog, notice: 'Dog was successfully updated.' }
-        format.json { render :show, status: :ok, location: @dog }
+          format.html { redirect_to @dog, notice: 'Dog was successfully updated.' }
+          format.json { render :show, status: :ok, location: @dog }
+        else
+          format.html { render :edit }
+          format.json { render json: @dog.errors, status: :unprocessable_entity }
+        end
       else
-        format.html { render :edit }
-        format.json { render json: @dog.errors, status: :unprocessable_entity }
+        format.html { redirect_to @dog, notice: 'Dog cannot be edited.' }
+        format.json { render json: @dog.errors, status: :unauthorized }
       end
     end
   end
@@ -74,5 +95,12 @@ class DogsController < ApplicationController
     # Never trust parameters from the scary internet, only allow the white list through.
     def dog_params
       params.require(:dog).permit(:name, :description, :images)
+    end
+
+    # Checks if the current logged in user is the owner of the dog.
+    #
+    # Returns - True when the logged in user is the owner. False otherwise.
+    def curent_user_authorized?
+      current_user == @dog.owner
     end
 end

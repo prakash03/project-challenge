@@ -1,6 +1,15 @@
-<a href="<%= url_for(dog) %>">
-  <article>
-    <h2 class="dog-name"><%= dog.name %></h2>
-    <%= image_tag url_for(dog.images.first), class: "dog-photo", alt: "Photo of #{dog.name}" %>
-  </article>
-</a>
+<div class="col" style="margin-bottom: 15px">
+  <div class="card" style="width: 18rem">
+    <%= image_tag url_for(dog.images.first), alt: "Photo of #{dog.name}" %>
+    <div class="card-body">
+      <h5 class="card-title"><%= dog.name %></h5>
+      <p class="card-text"><%= dog.description %></p>
+      <p><%= dog.likes.count %> <%= (dog.likes.count) == 1 ? 'Like' : 'Likes'%></p>
+      <% if current_user && current_user != dog.owner && !current_user.likes?(dog.id) %>
+        <%= button_to 'Like', dog_likes_path(dog), method: :post, class: "btn btn-success" %>
+        <br>
+      <% end %>
+      <%= button_to "More Details", dog_path(dog), method: :get, class: "btn btn-primary" %>
+    </div>
+  </div>
+</div>
